@@ -207,8 +207,16 @@
      it doesn't quite fit the viewport width. keep-all restricts breaks to
      actual word boundaries (spaces), like Latin text, so words never split. */
   .statement-text { font-family:'Cormorant Garamond','Gowun Dodum',sans-serif; font-weight:600; font-size:clamp(18px,2.4vw,27px); line-height:1.7; color:#1A1714; max-width:680px; margin:0 auto; text-align:left; word-break:keep-all; }
-  .statement-text .row { overflow:hidden; }
-  .statement-text .row span { display:block; transform:translateY(110%); }
+  /* Typed-in reveal (matching the hero kicker's effect) instead of the
+     block slide-up used elsewhere — each character starts invisible and a
+     blinking caret sits at the current typing position. opacity-only
+     (no transform) so word-break:keep-all's line-wrapping isn't disturbed
+     by a per-character translate. */
+  .statement-text .ch { opacity:0; }
+  .statement-text .st-caret {
+    display:inline-block; margin-left:2px; opacity:0; color:#1A1714;
+    animation:caretBlink 0.9s step-end infinite;
+  }
 
   /* ============ PRODUCT PARALLAX — each product zooms in/out as it scrolls ============ */
   .product-stage {
@@ -530,18 +538,69 @@
      typed in, rather than faded/risen like the rest of the hero — this is
      the line carrying "this is a sofa brand", so it gets its own distinct,
      deliberate entrance instead of blending into the generic reveal style. ---- */
-  function splitChars(el) {
+  function splitChars(el, className = 'kc') {
     const text = el.textContent;
     el.textContent = '';
     return [...text].map((ch) => {
       const span = document.createElement('span');
       span.textContent = ch === ' ' ? ' ' : ch;
-      span.className = 'kc';
+      span.className = className;
       el.appendChild(span);
       return span;
     });
   }
   const kickerChars = splitChars(document.querySelector('.hero .kicker span'));
+
+  /* ---- Statement paragraph: typed in like the hero kicker, but scroll-
+     triggered (the kicker types in on the fixed intro timeline; this one
+     only starts once the section actually scrolls into view) and with its
+     own trailing caret appended after the text rather than baked into the
+     markup, since the text itself is plain content with no caret span. ---- */
+  /* Splitting every character into its own <span> (as splitChars does) and
+     relying on word-break:keep-all to stop mid-word breaks doesn't work
+     together — keep-all's CJK word-boundary detection gets confused once
+     each syllable is already isolated in its own element, so the whole
+     paragraph stopped wrapping at all and ran off the right edge. Instead,
+     group each word's character-spans inside a white-space:nowrap wrapper
+     (so that word physically cannot split, independent of word-break) and
+     join the word-wrappers with real space text nodes in the flow (so the
+     browser still has actual whitespace to wrap the paragraph at). */
+  function splitWordsIntoChars(el, charClassName = 'ch') {
+    const text = el.textContent;
+    el.textContent = '';
+    const chars = [];
+    text.split(' ').forEach((word, i, arr) => {
+      const wordEl = document.createElement('span');
+      wordEl.style.whiteSpace = 'nowrap';
+      [...word].forEach((ch) => {
+        const span = document.createElement('span');
+        span.textContent = ch;
+        span.className = charClassName;
+        wordEl.appendChild(span);
+        chars.push(span);
+      });
+      el.appendChild(wordEl);
+      if (i < arr.length - 1) el.appendChild(document.createTextNode(' '));
+    });
+    return chars;
+  }
+  const statementTextEl = document.querySelector('.statement-text .row span');
+  const statementChars = splitWordsIntoChars(statementTextEl, 'ch');
+  const statementCaret = document.createElement('span');
+  statementCaret.className = 'st-caret';
+  statementCaret.textContent = '|';
+  statementTextEl.appendChild(statementCaret);
+  ScrollTrigger.create({
+    trigger: '.statement-text',
+    start: 'top 80%',
+    once: true,
+    onEnter: () => {
+      gsap.timeline()
+        .to(statementCaret, { opacity: 1, duration: 0.01 })
+        .to(statementChars, { opacity: 1, duration: 0.02, stagger: 0.018, ease: 'none' }, 0)
+        .to(statementCaret, { opacity: 0, duration: 0.3 }, '+=0.3');
+    }
+  });
 
   /* ---- Cinematic intro: brand word fades in on a dark screen, holds
      briefly, then fades the whole card out — a single dedicated moment
@@ -565,7 +624,7 @@
     .to('.hero .sub span', { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.1, ease: 'power2.out' }, '-=0.2');
 
   /* ---- Generic line-mask reveal for every section heading/statement, scroll-triggered ---- */
-  document.querySelectorAll('section:not(.hero) .eyebrow span, section:not(.hero) h2.heading .row span, .statement-text .row span').forEach((el) => {
+  document.querySelectorAll('section:not(.hero) .eyebrow span, section:not(.hero) h2.heading .row span').forEach((el) => {
     ScrollTrigger.create({
       trigger: el,
       start: 'top 88%',
