@@ -105,6 +105,13 @@
     .quick-bar .qb-reserve { font-size:12.5px; padding:11px 16px; }
     .quick-bar span.qb-label-long { display:none; }
   }
+  /* Below ~420px the quick-bar pills (centered as a group) push far enough
+     left to physically overlap the fixed logo in the corner — shrinking the
+     logo and pulling it tighter to the edge keeps the two from colliding. */
+  @media (max-width:420px){
+    .site-logo { padding:22px 4vw; }
+    .site-logo img { height:17px; }
+  }
 
   /* ============ INTRO — cinematic title card before the hero, so the brand
      name gets one dedicated dark-screen moment instead of permanently
@@ -308,7 +315,17 @@
     position:relative; z-index:1;
   }
   .reserve-meta .row2 { display:flex; gap:10px; justify-content:center; font-size:13px; color:#8a7e6f; opacity:0; transform:translateY(12px); }
-  .reserve-meta b { font-weight:600; color:#1A1714; }
+  /* Without flex-shrink:0, the flex layout lets this label shrink narrower
+     than its own text needs once the row's total content doesn't fit one
+     line (e.g. a long address on a narrow phone) — at that point the label
+     wraps character-by-character ("주" over "소") instead of the longer
+     value text wrapping, since both were shrinking together. Keeping the
+     label at its natural width means only the value ever wraps. */
+  .reserve-meta b { font-weight:600; color:#1A1714; flex-shrink:0; }
+  @media (max-width:480px){
+    .reserve-meta .row2 { max-width:280px; margin:0 auto; text-align:left; }
+    .reserve-cta { padding:18px 36px; font-size:14px; }
+  }
 
   footer {
     display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;
