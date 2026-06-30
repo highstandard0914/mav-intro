@@ -35,17 +35,6 @@
   .site-header nav { justify-self:center; display:flex; gap:36px; }
   .site-header .book { justify-self:end; }
 
-  /* ============ LOGO — a real brand-colored image (gray/orange), so it
-     CANNOT live inside .site-header: mix-blend-mode on an element blends
-     that element's entire painted output (including all descendants) as one
-     unit against the backdrop, and isolation on a child doesn't exempt it
-     from an ancestor's blend mode — only from blending among its own
-     descendants. The fix is structural: render the logo as a separate fixed
-     sibling, positioned to land in the header's reserved left column, so it
-     paints normally (true colors) on top of the page instead of inverting
-     against whatever scrolls underneath. ============ */
-  .site-logo { position:fixed; top:0; left:0; z-index:101; padding:28px 5vw; }
-  .site-logo img { height:22px; display:block; }
   .site-header nav a { font-size:13px; letter-spacing:1px; position:relative; }
   .site-header nav a::after {
     content:''; position:absolute; left:0; bottom:-5px; width:100%; height:1px;
@@ -111,13 +100,6 @@
     .quick-bar { padding:18px 4vw; gap:6px; }
     .quick-bar > a { padding:10px 12px; font-size:11px; }
     .quick-bar .qb-reserve { font-size:12px; padding:11px 14px; }
-  }
-  /* Below ~420px the quick-bar pills (centered as a group) push far enough
-     left to physically overlap the fixed logo in the corner — shrinking the
-     logo and pulling it tighter to the edge keeps the two from colliding. */
-  @media (max-width:420px){
-    .site-logo { padding:22px 4vw; }
-    .site-logo img { height:17px; }
   }
 
   /* ============ INTRO — cinematic title card before the hero, so the brand
@@ -220,7 +202,12 @@
      edge zigzag line to line, which reads as misaligned rather than
      deliberate. A left-aligned block (still centered as a whole via the
      container's margin:0 auto) reads as an intentional paragraph instead. */
-  .statement-text { font-family:'Cormorant Garamond','Gowun Dodum',sans-serif; font-weight:600; font-size:clamp(18px,2.4vw,27px); line-height:1.7; color:#1A1714; max-width:680px; margin:0 auto; text-align:left; }
+  /* word-break:keep-all — without it, the browser's default CJK line-
+     breaking treats every Hangul syllable as its own break opportunity, so
+     a long row can split mid-word ("완성하는" -> "완" / "성하는") whenever
+     it doesn't quite fit the viewport width. keep-all restricts breaks to
+     actual word boundaries (spaces), like Latin text, so words never split. */
+  .statement-text { font-family:'Cormorant Garamond','Gowun Dodum',sans-serif; font-weight:600; font-size:clamp(18px,2.4vw,27px); line-height:1.7; color:#1A1714; max-width:680px; margin:0 auto; text-align:left; word-break:keep-all; }
   .statement-text .row { overflow:hidden; }
   .statement-text .row span { display:block; transform:translateY(110%); }
 
@@ -360,10 +347,6 @@
 
 <div class="intro" id="intro">
   <div class="word">MAV STUDIO</div>
-</div>
-
-<div class="site-logo">
-  <img src="images/mav/logo_top.jpg" alt="MAV STUDIO">
 </div>
 
 <header class="site-header">
@@ -533,136 +516,6 @@
     });
   });
 
-  /* ---- Header logo: cut the flat white backdrop to transparent. The source
-     crop is tiny (101x50) and JPEG-compressed, so cutting out the
-     background at native resolution and letting CSS scale the result up
-     just magnified both the hard cutout edge and the JPEG's own
-     compression speckling. Instead, upscale first with the browser's own
-     smooth interpolation (drawImage onto a 4x canvas), THEN cut out and
-     feather on that smoothed result — the exported image is already
-     high-res, so the <img> tag is scaling it down, not up. ---- */
-  function cutoutWhiteLogo(img, scale = 4) {
-    return new Promise((resolve) => {
-      const run = () => {
-        const w = img.naturalWidth * scale, h = img.naturalHeight * scale;
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, w, h);
-        const imgData = ctx.getImageData(0, 0, w, h);
-        const data = imgData.data;
-        const isBg = (i) => data[i] > 235 && data[i + 1] > 235 && data[i + 2] > 235;
-        const seen = new Uint8Array(w * h);
-        const alpha = new Uint8Array(w * h).fill(255);
-        const queue = [];
-        for (let x = 0; x < w; x++) { queue.push(x, (h - 1) * w + x); }
-        for (let y = 0; y < h; y++) { queue.push(y * w, y * w + (w - 1)); }
-        let qi = 0;
-        while (qi < queue.length) {
-          const p = queue[qi++];
-          if (seen[p]) continue;
-          seen[p] = 1;
-          const i = p * 4;
-          if (!isBg(i)) continue;
-          alpha[p] = 0;
-          const x = p % w, y = (p - x) / w;
-          if (x > 0) queue.push(p - 1);
-          if (x < w - 1) queue.push(p + 1);
-          if (y > 0) queue.push(p - w);
-          if (y < h - 1) queue.push(p + w);
-        }
-        /* Letters with an enclosed counter (the "D" and "O" in "MAV STUDIO")
-           have a pocket of background-colored pixels that's surrounded
-           entirely by dark ink, never touching the image border — so the
-           border-seeded flood fill above can never reach it, and it stays
-           opaque white. Fix: scan for any bg-colored pixel not already
-           cleared, flood-fill its own connected component (regardless of
-           border contact), and clear it too if that component is small
-           enough to be a letter counter rather than the real background
-           (which the first pass would already have caught in full). */
-        const holeSeen = new Uint8Array(w * h);
-        for (let start = 0; start < w * h; start++) {
-          if (alpha[start] === 0 || holeSeen[start]) continue;
-          const i0 = start * 4;
-          if (!isBg(i0)) continue;
-          const comp = [start];
-          holeSeen[start] = 1;
-          let qi2 = 0;
-          while (qi2 < comp.length) {
-            const p = comp[qi2++];
-            const x = p % w, y = (p - x) / w;
-            const neighbors = [];
-            if (x > 0) neighbors.push(p - 1);
-            if (x < w - 1) neighbors.push(p + 1);
-            if (y > 0) neighbors.push(p - w);
-            if (y < h - 1) neighbors.push(p + w);
-            for (const np of neighbors) {
-              if (holeSeen[np] || alpha[np] === 0) continue;
-              if (!isBg(np * 4)) continue;
-              holeSeen[np] = 1;
-              comp.push(np);
-            }
-          }
-          if (comp.length < w * h * 0.08) {
-            for (const p of comp) alpha[p] = 0;
-          }
-        }
-        /* JPEG ringing around the letters leaves a band of pixels that are
-           light but just barely fail the >235 flood-fill test, so they stay
-           opaque and survive as visible speckle/noise hugging the edges
-           once feathered. A despeckle pass fixes this: any currently-opaque
-           pixel that's both light-ish (the kind of pixel ringing produces,
-           not the logo's actual dark ink) and mostly surrounded by already-
-           transparent pixels gets pulled into the background too — this
-           only reaches the thin noisy halo, never the solid interior of a
-           letter, since real letter pixels are darker and have opaque
-           neighbors on all sides. */
-        const dr = Math.max(2, Math.round(scale));
-        for (let y = 0; y < h; y++) {
-          for (let x = 0; x < w; x++) {
-            const p = y * w + x;
-            if (alpha[p] === 0) continue;
-            const i = p * 4;
-            const isLightish = data[i] > 180 && data[i + 1] > 180 && data[i + 2] > 180;
-            if (!isLightish) continue;
-            let transparentCount = 0, total = 0;
-            for (let dy = -dr; dy <= dr; dy++) {
-              for (let dx = -dr; dx <= dr; dx++) {
-                const nx = x + dx, ny = y + dy;
-                if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
-                total++;
-                if (alpha[ny * w + nx] === 0) transparentCount++;
-              }
-            }
-            if (transparentCount / total > 0.45) alpha[p] = 0;
-          }
-        }
-        const r = Math.max(1, Math.round(scale / 2));
-        for (let y = 0; y < h; y++) {
-          for (let x = 0; x < w; x++) {
-            let sum = 0, count = 0;
-            for (let dy = -r; dy <= r; dy++) {
-              for (let dx = -r; dx <= r; dx++) {
-                const nx = x + dx, ny = y + dy;
-                if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
-                sum += alpha[ny * w + nx]; count++;
-              }
-            }
-            data[(y * w + x) * 4 + 3] = Math.round(sum / count);
-          }
-        }
-        ctx.putImageData(imgData, 0, 0);
-        canvas.toBlob((blob) => { img.src = URL.createObjectURL(blob); img.onload = resolve; }, 'image/png');
-      };
-      if (img.complete) run(); else img.onload = run;
-    });
-  }
-  cutoutWhiteLogo(document.querySelector('.site-logo img'));
-
-  /* ---- Header logo legibility on the dark .reserve section: toggle a
-     class that inverts the logo's filter once that section is in view. ---- */
   /* ---- Reserve section: stagger the sub line, CTA, and each address row
      in on top of the heading's own reveal, instead of everything just being
      present the moment the section scrolls into view. Without this the
