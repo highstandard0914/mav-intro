@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAV STUDIO | 마브 스튜디오</title>
+<meta name="description" content="유럽산 원단과 부자재로 제작하는 프리미엄 맞춤 소파, MAV STUDIO">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600&family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Pretendard:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/lenis@1.1.9/dist/lenis.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#FFFFFF;
+    color:#1A1714;
+    font-family:'Pretendard', -apple-system, sans-serif;
+    overflow-x:hidden;
+  }
+  a { color:inherit; text-decoration:none; }
+  img { display:block; max-width:100%; }
+  ::selection { background:#1A1714; color:#EFEDEA; }
+
+  /* ============ HEADER — mix-blend-mode:difference ============ */
+  .site-header {
+    position:fixed; top:0; left:0; width:100%; z-index:100;
+    display:grid; grid-template-columns:1fr auto 1fr; align-items:center; column-gap:20px;
+    padding:28px 5vw;
+    color:#fff;
+    mix-blend-mode:difference;
+  }
+  .site-header nav { justify-self:center; display:flex; gap:36px; }
+  .site-header .book { justify-self:end; }
+
+  /* ============ LOGO — a real brand-colored image (gray/orange), so it
+     CANNOT live inside .site-header: mix-blend-mode on an element blends
+     that element's entire painted output (including all descendants) as one
+     unit against the backdrop, and isolation on a child doesn't exempt it
+     from an ancestor's blend mode — only from blending among its own
+     descendants. The fix is structural: render the logo as a separate fixed
+     sibling, positioned to land in the header's reserved left column, so it
+     paints normally (true colors) on top of the page instead of inverting
+     against whatever scrolls underneath. ============ */
+  .site-logo { position:fixed; top:0; left:0; z-index:101; padding:28px 5vw; }
+  .site-logo img { height:22px; display:block; }
+  .site-header nav a { font-size:13px; letter-spacing:1px; position:relative; }
+  .site-header nav a::after {
+    content:''; position:absolute; left:0; bottom:-5px; width:100%; height:1px;
+    background:#fff; transform:scaleX(0); transform-origin:right; transition:transform .4s cubic-bezier(.65,0,.35,1);
+  }
+  .site-header nav a:hover::after { transform:scaleX(1); transform-origin:left; }
+  @media (max-width:860px){ .site-header nav{ display:none; } }
+
+  /* ============ QUICK BAR — every key action (예약/상담/홈페이지) as one
+     always-visible, equally-scannable row, in priority order, mirroring the
+     plain button-list link-in-bio page this site is replacing. It used to be
+     split between a header CTA (top-right, easy to miss against the hero
+     video) and a bottom-right floating stack (small, low-commitment) — that
+     split is exactly what felt unclear, so this consolidates both into one
+     row people see the instant the page loads, with no scrolling required.
+     A separate fixed element (not inside .site-header) because the header's
+     mix-blend-mode:difference would invert these buttons' real colors. */
+  .quick-bar {
+    position:fixed; top:0; left:0; width:100%; z-index:101;
+    display:flex; justify-content:center; align-items:center; gap:10px;
+    padding:24px 5vw; min-height:76px;
+    pointer-events:none; /* row wrapper only positions things; clicks pass through the gaps */
+  }
+  .quick-bar > a { pointer-events:auto; }
+  .quick-bar > a {
+    display:flex; align-items:center; gap:7px;
+    font-size:12.5px; font-weight:600; letter-spacing:0.2px;
+    padding:11px 18px; border-radius:999px;
+    box-shadow:0 6px 20px rgba(26,23,20,0.16);
+    transition:transform .3s cubic-bezier(.16,1,.3,1);
+    backdrop-filter:blur(6px);
+  }
+  .quick-bar > a:hover { transform:translateY(-2px); }
+  /* 예약 — highest priority, so it's the only solid-filled, largest pill,
+     plus the same breathing pulse the old header CTA had to keep drawing
+     the eye without needing extra color. */
+  /* Naver green, since this button links out to a Naver Place booking page —
+     matching that brand's own color makes the destination recognizable
+     before the click, the same way the Kakao button uses Kakao yellow. */
+  .quick-bar .qb-reserve {
+    background:#03C75A; color:#fff; font-size:13.5px; padding:12px 22px;
+    animation: bookPulse 2.6s ease-in-out infinite;
+  }
+  @keyframes bookPulse { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.05); } }
+  /* 상담 — second priority, Kakao's own brand yellow so it's instantly
+     recognizable as "chat" the way it is on the inpock page. */
+  .quick-bar .qb-kakao { background:#FEE500; color:#3C1E1E; }
+  .quick-bar .qb-kakao svg { width:15px; height:15px; flex-shrink:0; }
+  .quick-bar .qb-reserve svg, .quick-bar .qb-shop svg { width:15px; height:15px; flex-shrink:0; }
+  /* 홈페이지 — lowest priority of the three, so it's just an outline on
+     translucent white rather than a solid fill, the same way inpock's own
+     "쇼핑몰 바로가기" item naturally read quieter than the booking/chat ones. */
+  .quick-bar .qb-shop { background:rgba(255,255,255,0.82); color:#1A1714; border:1px solid rgba(26,23,20,0.14); }
+  @media (max-width:700px){
+    .quick-bar { padding:18px 4vw; gap:6px; }
+    .quick-bar > a { padding:10px 14px; font-size:11.5px; }
+    .quick-bar .qb-reserve { font-size:12.5px; padding:11px 16px; }
+    .quick-bar span.qb-label-long { display:none; }
+  }
+
+  /* ============ INTRO — cinematic title card before the hero, so the brand
+     name gets one dedicated dark-screen moment instead of permanently
+     sitting on top of (and fighting with) the hero video. ============ */
+  .intro {
+    position:fixed; inset:0; z-index:999;
+    background:#1A1714; display:flex; align-items:center; justify-content:center;
+  }
+  .intro .word {
+    font-family:'Cormorant Garamond',serif; font-weight:600; color:#EFEDEA;
+    font-size:7vw; letter-spacing:4px; opacity:0;
+  }
+  body.intro-active { overflow:hidden; height:100vh; }
+
+  /* ============ HERO — the video is the subject now; no large type sits on
+     top of it. Brand context lives in a small corner block instead, with a
+     soft local shadow (not a full veil) so the footage stays unobstructed. ============ */
+  .hero {
+    height:100vh; min-height:640px;
+    position:relative; overflow:hidden;
+  }
+  .hero-video {
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0;
+    filter:saturate(1.35) contrast(1.06);
+  }
+  .hero-info {
+    position:absolute; left:5vw; bottom:78px; z-index:2; max-width:520px; text-align:left;
+  }
+  /* Sized and weighted up substantially from the original small caption —
+     at the old clamp(15px,1.7vw,21px)/13.5px sizing the whole block read as
+     a quiet corner caption, leaving the video's empty center/right-side
+     negative space feeling unanchored. Scaling this up (and adding the
+     divider rule below) gives the text enough visual weight to balance
+     against the footage instead of getting lost in it. Typed in
+     character-by-character (see JS) rather than the blur/rise reveal used
+     elsewhere, so it reads as a deliberate typewritten line instead of just
+     another fading caption. */
+  .hero .kicker {
+    font-size:clamp(18px,3.2vw,40px); font-weight:600; letter-spacing:3.5px; color:#fff;
+    text-transform:uppercase; margin-bottom:16px; white-space:nowrap;
+    text-shadow:0 2px 18px rgba(0,0,0,0.5);
+  }
+  /* The outer <span> wrapping the line stays opacity:1 (it's just a text
+     container) — only the per-character spans JS injects inside it (.kc)
+     start hidden, since CSS opacity on an ancestor would mask children
+     regardless of their own opacity. */
+  .hero .kicker .kc { display:inline-block; opacity:0; }
+  .hero .kicker .caret {
+    display:inline-block; margin-left:2px; opacity:0;
+    animation:caretBlink 0.9s step-end infinite;
+  }
+  @keyframes caretBlink { 50%{ opacity:0; } }
+  /* Short horizontal rule between the kicker and sub line, animated in like
+     a drawn line — gives the block a bit of structure/anchoring rather than
+     being two loose lines of text floating in open video space. */
+  .hero .divider {
+    width:0; height:1px; background:rgba(255,255,255,0.55); margin-bottom:16px;
+    box-shadow:0 1px 8px rgba(0,0,0,0.35);
+  }
+  .hero .sub {
+    font-size:clamp(15px,1.5vw,18.5px); letter-spacing:0.3px; color:#fff; font-weight:300; line-height:1.7;
+    text-shadow:0 1px 12px rgba(0,0,0,0.35);
+  }
+  .hero .sub span { display:block; transform:translateY(14px); opacity:0; filter:blur(6px); }
+  @media (max-width:700px){
+    .hero-info { max-width:78vw; bottom:56px; }
+  }
+  .hero .scroll-indicator {
+    position:absolute; bottom:40px; left:50%; transform:translateX(-50%); z-index:2;
+    display:flex; flex-direction:column; align-items:center; gap:10px; opacity:0;
+    font-size:11px; letter-spacing:2px; color:#fff; text-shadow:0 1px 12px rgba(0,0,0,0.35);
+  }
+  .hero .scroll-indicator .stick { width:1px; height:30px; background:rgba(255,255,255,0.35); position:relative; overflow:hidden; }
+  .hero .scroll-indicator .stick i { position:absolute; top:-100%; left:0; width:100%; height:100%; background:#fff; animation:stick 1.8s ease-in-out infinite; }
+  @keyframes stick { 0%{top:-100%;} 50%{top:0;} 100%{top:100%;} }
+
+  /* ============ SECTION SCAFFOLD ============ */
+  section { position:relative; padding:14vw 5vw; }
+  .eyebrow { font-size:12px; letter-spacing:3px; text-transform:uppercase; color:#8a7e6f; margin-bottom:1.4vw; overflow:hidden; }
+  .eyebrow span { display:block; transform:translateY(120%); }
+  /* 'Gowun Dodum' as fallback: Cormorant Garamond has no Hangul glyphs, so
+     without it the browser falls back to a generic system serif for any
+     Korean text in these headings. Gowun Batang (a Korean serif) was tried
+     first, but its serif strokes still read as too sharp/stiff next to the
+     soft video and rounded Pretendard body copy — switched to Gowun Dodum,
+     a rounded *sans* with no hard serif terminals, for a visibly softer feel
+     while keeping Cormorant Garamond for the Latin characters. */
+  h2.heading { font-family:'Cormorant Garamond','Gowun Dodum',sans-serif; font-weight:600; font-size:6vw; line-height:1.05; color:#1A1714; }
+  h2.heading .row { overflow:hidden; }
+  h2.heading .row span { display:block; transform:translateY(110%); }
+  @media (min-width:1200px){ h2.heading{ font-size:64px; } }
+
+  /* ============ STATEMENT — single-line brand identity, no imagery ============ */
+  .statement { text-align:center; padding:9vw 5vw 11vw; }
+  .statement-text { font-family:'Cormorant Garamond','Gowun Dodum',sans-serif; font-weight:600; font-size:clamp(18px,2.4vw,27px); line-height:1.7; color:#1A1714; max-width:680px; margin:0 auto; }
+  .statement-text .row { overflow:hidden; }
+  .statement-text .row span { display:block; transform:translateY(110%); }
+
+  /* ============ PRODUCT PARALLAX — each product zooms in/out as it scrolls ============ */
+  .product-stage {
+    position:relative; /* was missing — without this, every absolutely-positioned child
+      (.product-label, .product-index, .product-frame) anchored to the document's
+      initial containing block instead of its own section, so all 5 labels collapsed
+      onto the same on-screen spot regardless of scroll position */
+    height:100vh; min-height:560px; display:flex; align-items:center; justify-content:center;
+    overflow:hidden; padding:0;
+  }
+  /* image + name are grouped and centered together as one block, so the
+     gap between them is a fixed, small distance regardless of viewport
+     height — previously the name was pinned to bottom:6vh of the full
+     100vh stage while the image sat at vertical center, so on a tall
+     white background they could end up 200px+ apart. */
+  .product-content { display:flex; flex-direction:column; align-items:center; gap:8px; }
+  /* Hover zoom lives on .product-frame (the wrapper), not the <img> itself —
+     the <img>'s own transform is already driven by GSAP on scroll (the
+     0.82 -> 1.18 parallax zoom), and GSAP writes that as an inline style,
+     which would silently stomp any CSS :hover transform put on the same
+     element. Scaling the wrapper instead keeps the two effects independent:
+     scroll zoom always applies to the image, hover zoom applies on top of
+     it via the parent, with its own transition. */
+  .product-frame {
+    display:block; position:relative; width:min(56vw,760px); aspect-ratio:16/11;
+    transition:transform .5s cubic-bezier(.16,1,.3,1);
+  }
+  .product-frame:hover { transform:scale(1.045); }
+  .product-frame img {
+    position:absolute; inset:0; width:100%; height:100%; object-fit:contain; will-change:transform;
+  }
+  /* ============ COLOR SWITCHER — click-driven color cycling (MELO BUBBLE
+     for now). An earlier scroll-scrubbed version tied color changes to
+     scroll position, but that meant the user had to scroll at exactly the
+     right pace to see each color "hold" — too fragile/timing-dependent.
+     Manual click control means it's never tied to scroll speed. ============ */
+  .color-switcher { position:relative; }
+  .color-next {
+    position:absolute; right:-8px; top:50%; transform:translateY(-50%); z-index:3;
+    width:44px; height:44px; border-radius:50%; border:none;
+    background:rgba(255,255,255,0.85); color:#1A1714; font-size:22px; line-height:1;
+    cursor:pointer; box-shadow:0 4px 16px rgba(26,23,20,0.18);
+    transition:transform .25s ease, background .25s ease;
+  }
+  .color-next:hover { transform:translateY(-50%) scale(1.08); background:#fff; }
+  @media (max-width:700px){ .color-next{ right:4px; width:38px; height:38px; font-size:18px; } }
+
+  .product-label {
+    font-family:'Cormorant Garamond',serif; font-weight:600; font-size:clamp(24px,4vw,42px);
+    letter-spacing:3px; text-transform:uppercase; color:#1A1714;
+    overflow:hidden;
+    order:-1; /* flex order, not DOM order — puts the name above the image
+      without needing the JS reveal logic (which targets these elements by
+      selector, not document position) to change at all. */
+    margin-bottom:19px; /* ~5mm extra breathing room above the image, on
+      top of the column's own 8px gap */
+  }
+  .product-label span, .product-index span { display:block; }
+  .product-index {
+    position:absolute; top:6vh; left:50%; transform:translateX(-50%);
+    font-size:12px; letter-spacing:3px; color:#8a7e6f;
+    overflow:hidden;
+  }
+
+  /* ============ RESERVE — the page's actual goal, given the most visual
+     weight. A full dark reversal (the original version) read as off-brand —
+     the real MAV STUDIO site stays in white/light-gray throughout — so the
+     "this is the destination" feeling now comes from a warm light-gray
+     panel (a tonal step down from the page's pure white, not a full
+     inversion) plus a subtle grain texture and staggered entrance, rather
+     than from a stark black/white reversal. No showroom photography (the
+     brand's existing shots are too thin to hold a hero-sized crop), so the
+     weight still comes mainly from scale/typography. */
+  .reserve {
+    background:#EFEAE2; color:#1A1714;
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:12vw 5vw; position:relative; overflow:hidden;
+  }
+  /* Cheap CSS-only grain: a tiled SVG noise filter, no image asset needed.
+     Kept very low-opacity — just enough to break up the flat fill so the
+     section doesn't feel as static/dead as the original solid color did. */
+  .reserve::before {
+    content:''; position:absolute; inset:0; opacity:0.5; pointer-events:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.35'/></svg>");
+  }
+  .reserve .eyebrow { color:#8a7e6f; margin:0 auto 1.4vw; position:relative; z-index:1; }
+  .reserve .eyebrow span { color:#8a7e6f; }
+  .reserve .heading { color:#1A1714; font-size:8vw; margin:0 auto; position:relative; z-index:1; }
+  @media (min-width:1200px){ .reserve .heading{ font-size:80px; } }
+  .reserve-sub {
+    margin:28px auto 0; max-width:480px; font-size:15px; line-height:1.9; color:#6b6053; font-weight:300;
+    position:relative; z-index:1; opacity:0; transform:translateY(16px);
+  }
+  .reserve-cta {
+    display:inline-flex; align-items:center; gap:10px; margin-top:48px;
+    padding:21px 52px; background:#1A1714; color:#EFEAE2; font-size:15.5px; font-weight:600;
+    letter-spacing:1px; border-radius:999px; position:relative; z-index:1;
+    opacity:0; transform:translateY(16px);
+  }
+  .reserve-cta .ring { position:absolute; inset:0; border:1px solid rgba(26,23,20,0.35); border-radius:999px; animation:ring 2.2s ease-out infinite; }
+  @keyframes ring { 0%{ transform:scale(1); opacity:0.8; } 100%{ transform:scale(1.3); opacity:0; } }
+  .reserve-meta {
+    margin-top:52px; display:flex; flex-direction:column; gap:10px;
+    position:relative; z-index:1;
+  }
+  .reserve-meta .row2 { display:flex; gap:10px; justify-content:center; font-size:13px; color:#8a7e6f; opacity:0; transform:translateY(12px); }
+  .reserve-meta b { font-weight:600; color:#1A1714; }
+
+  footer {
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;
+    padding:40px 5vw 30px; font-size:12px; color:#8a7e6f;
+    background:#EFEAE2; border-top:1px solid rgba(26,23,20,0.08);
+  }
+  footer .mark { font-family:'Cormorant Garamond',serif; font-size:15px; letter-spacing:2px; color:#1A1714; }
+  footer div:last-child { color:#8a7e6f; }
+</style>
+</head>
+<body class="intro-active">
+
+<div class="intro" id="intro">
+  <div class="word">MAV STUDIO</div>
+</div>
+
+<div class="site-logo">
+  <img src="images/mav/logo_top.jpg" alt="MAV STUDIO">
+</div>
+
+<header class="site-header">
+  <div></div>
+  <nav></nav>
+  <div></div>
+</header>
+
+<div class="quick-bar">
+  <a href="#" id="quickReserve" target="_blank" rel="noopener" class="qb-reserve">
+    <svg viewBox="0 0 18 18" fill="none"><rect x="2" y="3" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h14" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 1.5v3M12.5 1.5v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M5.8 10.2l1.8 1.8 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>쇼룸 예약하기</span>
+  </a>
+  <a href="http://pf.kakao.com/_lpfxixl" target="_blank" rel="noopener" class="qb-kakao">
+    <svg viewBox="0 0 18 18" fill="none"><path d="M9 1.5C4.86 1.5 1.5 4.13 1.5 7.38c0 2.07 1.38 3.9 3.47 4.93L4.1 15.3c-.06.2.17.36.34.23l3.5-2.33c.35.04.7.06 1.06.06 4.14 0 7.5-2.63 7.5-5.88S13.14 1.5 9 1.5z" fill="currentColor"/></svg>
+    <span>실시간 상담</span>
+  </a>
+  <a href="https://mav-studio.co.kr/index.html" target="_blank" rel="noopener" class="qb-shop">
+    <svg viewBox="0 0 18 18" fill="none"><path d="M5 5.5V4.2a4 4 0 0 1 8 0v1.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="2.8" y="5.5" width="12.4" height="10" rx="2" stroke="currentColor" stroke-width="1.4"/></svg>
+    <span class="qb-label-long">쇼핑몰 바로가기</span>
+  </a>
+</div>
+
+<section class="hero">
+  <video class="hero-video" autoplay muted loop playsinline>
+    <source src="videos/hero-comfort.mp4" type="video/mp4">
+  </video>
+  <div class="hero-info">
+    <div class="kicker"><span>PREMIUM CUSTOM SOFA</span><span class="caret">|</span></div>
+    <div class="divider"></div>
+    <div class="sub"><span>유럽산 원단 &amp; 부자재로 완성하는 맞춤 소파</span></div>
+  </div>
+  <div class="scroll-indicator"><div class="stick"><i></i></div>SCROLL</div>
+</section>
+
+<section id="statement" class="statement">
+  <div class="statement-text">
+    <div class="row"><span>가장 편안한 쉼을 위해 빚어낸 오브제.</span></div>
+    <div class="row"><span>마브 스튜디오의 가구는 몸을 감싸 안는</span></div>
+    <div class="row"><span>섬세한 배려로부터 시작됩니다.</span></div>
+    <div class="row"><span>우리는 당신이 머무는 자리가 한 폭의 장면처럼</span></div>
+    <div class="row"><span>기억되길 바라며, 공간마다 각기 다른 무드를 완성하는</span></div>
+    <div class="row"><span>마브 스튜디오만의 소파 컬렉션을 선보입니다.</span></div>
+  </div>
+</section>
+
+<section id="products" style="padding:0">
+  <div class="product-stage" data-product data-name="MELO BUBBLE" data-index="01 / 05">
+    <div class="product-content">
+      <div class="color-switcher">
+        <a class="product-frame" href="https://mav-studio.co.kr/product/%EB%A9%9C%EB%A1%9C-%EB%B2%84%EB%B8%94-4%EC%9D%B8-%ED%8C%A8%EB%B8%8C%EB%A6%AD-%EB%AA%A8%EB%93%88-%EC%86%8C%ED%8C%8C/331/category/25/display/1/" target="_blank" rel="noopener">
+          <img src="images/mav/melo_bubble.png" alt="MELO BUBBLE 아이보리">
+          <img class="color-frame color-frame-real" src="images/mav/melo_bubble_skyblue.png" alt="MELO BUBBLE 하늘색" style="opacity:0">
+          <img class="color-frame color-frame-real" src="images/mav/melo_bubble_red.png" alt="MELO BUBBLE 레드" style="opacity:0">
+          <img class="color-frame color-frame-real" src="images/mav/melo_bubble_gray.png" alt="MELO BUBBLE 그레이" style="opacity:0">
+          <img class="color-frame color-frame-real" src="images/mav/melo_bubble_pink.png" alt="MELO BUBBLE 핑크" style="opacity:0">
+        </a>
+        <button type="button" class="color-next" aria-label="다음 색상 보기">&#8250;</button>
+      </div>
+      <div class="product-label"><span>Melo Bubble</span></div>
+    </div>
+    <div class="product-index"><span>01 / 05</span></div>
+  </div>
+  <div class="product-stage" data-product data-name="MELO STONE" data-index="02 / 05">
+    <div class="product-content">
+      <div class="color-switcher">
+        <a class="product-frame" href="https://mav-studio.co.kr/product/%EB%A9%9C%EB%A1%9C-%EC%8A%A4%ED%86%A4-5%EC%9D%B8-%ED%8C%A8%EB%B8%8C%EB%A6%AD-%EB%AA%A8%EB%93%88-%EC%86%8C%ED%8C%8C/288/category/25/display/1/" target="_blank" rel="noopener">
+          <img src="images/mav/melo_stone.png" alt="MELO STONE 어반 그레이">
+          <img class="color-frame color-frame-real" src="images/mav/melo_stone_black.png" alt="MELO STONE 블랙" style="opacity:0">
+          <img class="color-frame color-frame-real" src="images/mav/melo_stone_navy.jpg" alt="MELO STONE 네이비" style="opacity:0">
+          <img class="color-frame color-frame-real" src="images/mav/melo_stone_burgundy.jpg" alt="MELO STONE 버건디" style="opacity:0">
+        </a>
+        <button type="button" class="color-next" aria-label="다음 색상 보기">&#8250;</button>
+      </div>
+      <div class="product-label"><span>Melo Stone</span></div>
+    </div>
+    <div class="product-index"><span>02 / 05</span></div>
+  </div>
+  <div class="product-stage" data-product data-name="MELO ROUND" data-index="03 / 05">
+    <div class="product-content">
+      <div class="color-switcher">
+        <a class="product-frame" href="https://mav-studio.co.kr/product/%EB%A9%9C%EB%A1%9C-%EB%9D%BC%EC%9A%B4%EB%93%9C-ver2-5%EC%9D%B8-%EB%B2%A8%EB%B2%B3-%EC%86%8C%ED%8C%8C-%EC%9C%A1%EA%B0%81%ED%98%95/210/category/26/display/1/" target="_blank" rel="noopener">
+          <img src="images/mav/melo_round.png" alt="MELO ROUND 잉크블루">
+          <img class="color-frame color-frame-real" src="images/mav/melo_round_gray.png" alt="MELO ROUND 그레이" style="opacity:0">
+          <img class="color-frame color-frame-real" src="images/mav/melo_round_khaki.png" alt="MELO ROUND 카키" style="opacity:0">
+          <img class="color-frame color-frame-real" src="images/mav/melo_round_brown.png" alt="MELO ROUND 브라운" style="opacity:0">
+        </a>
+        <button type="button" class="color-next" aria-label="다음 색상 보기">&#8250;</button>
+      </div>
+      <div class="product-label"><span>Melo Round</span></div>
+    </div>
+    <div class="product-index"><span>03 / 05</span></div>
+  </div>
+  <div class="product-stage" data-product data-name="MELO BOX" data-index="04 / 05">
+    <div class="product-content">
+      <div class="color-switcher">
+        <a class="product-frame" href="https://mav-studio.co.kr/product/%EB%A9%9C%EB%A1%9C-%EB%B0%95%EC%8A%A4-4%EC%9D%B8-%ED%8C%A8%EB%B8%8C%EB%A6%AD-%EC%86%8C%ED%8C%8C-%EC%8A%A4%ED%88%B4%ED%98%95/128/category/26/display/1/" target="_blank" rel="noopener">
+          <img src="images/mav/melo_box.png" alt="MELO BOX 그린">
+          <img class="color-frame color-frame-real" src="images/mav/melo_box_ivory.png" alt="MELO BOX 아이보리" style="opacity:0">
+          <img class="color-frame color-frame-real" src="images/mav/melo_box_brown.png" alt="MELO BOX 브라운" style="opacity:0">
+          <img class="color-frame color-frame-real" src="images/mav/melo_box_navy.png" alt="MELO BOX 네이비" style="opacity:0">
+          <img class="color-frame color-frame-real" src="images/mav/melo_box_yellow.png" alt="MELO BOX 옐로우" style="opacity:0">
+        </a>
+        <button type="button" class="color-next" aria-label="다음 색상 보기">&#8250;</button>
+      </div>
+      <div class="product-label"><span>Melo Box</span></div>
+    </div>
+    <div class="product-index"><span>04 / 05</span></div>
+  </div>
+  <div class="product-stage" data-product data-name="MELO WOOD" data-index="05 / 05">
+    <div class="product-content">
+      <div class="color-switcher">
+        <a class="product-frame" href="https://mav-studio.co.kr/product/%EB%A9%9C%EB%A1%9C-%EC%9A%B0%EB%93%9C-1%EC%9D%B8-%EC%9B%94%EB%84%9B-%ED%8C%A8%EB%B8%8C%EB%A6%AD-%EC%86%8C%ED%8C%8C/56/category/24/display/1/" target="_blank" rel="noopener">
+          <img src="images/mav/melo_wood_navy.png" alt="MELO WOOD 네이비">
+          <img class="color-frame color-frame-real" src="images/mav/melo_wood_skyblue.png" alt="MELO WOOD 하늘색" style="opacity:0">
+          <img class="color-frame color-frame-real" src="images/mav/melo_wood_orange.png" alt="MELO WOOD 오렌지" style="opacity:0">
+          <img class="color-frame color-frame-real" src="images/mav/melo_wood_brown.png" alt="MELO WOOD 브라운" style="opacity:0">
+        </a>
+        <button type="button" class="color-next" aria-label="다음 색상 보기">&#8250;</button>
+      </div>
+      <div class="product-label"><span>Melo Wood</span></div>
+    </div>
+    <div class="product-index"><span>05 / 05</span></div>
+  </div>
+</section>
+
+<section id="reserve" class="reserve">
+  <div class="reserve-inner">
+    <div class="eyebrow"><span>Reservation</span></div>
+    <h2 class="heading"><div class="row"><span>방문 상담 예약</span></div></h2>
+    <p class="reserve-sub">쇼룸에서 원단과 마감을 직접 확인하고<br>나만의 소파를 상담받아보세요.</p>
+    <a href="#" id="naverBtn" target="_blank" rel="noopener" class="reserve-cta"><span class="ring"></span>네이버 플레이스에서 예약하기</a>
+    <div class="reserve-meta">
+      <div class="row2"><b>주소</b><span>서울특별시 서초구 사평대로8길 7 (반포동) 06575</span></div>
+      <div class="row2"><b>운영시간</b><span>11:00 – 19:00 · 월요일 휴무</span></div>
+      <div class="row2"><b>전화</b><span>02. 584. 8884</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="mark">MAV STUDIO</div>
+  <div>@mav_studio</div>
+</footer>
+
+
+<script>
+  document.getElementById('naverBtn').href = 'https://booking.naver.com/booking/13/bizes/1664963';
+  document.getElementById('quickReserve').href = 'https://booking.naver.com/booking/13/bizes/1664963';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* ---- Lenis smooth scroll, wired to GSAP's ticker ---- */
+  const lenis = new Lenis({
+    duration: 1.2,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true
+  });
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add((time) => lenis.raf(time * 1000));
+  gsap.ticker.lagSmoothing(0);
+
+  document.querySelectorAll('a[href^="#"]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) { e.preventDefault(); lenis.scrollTo(target, { offset: -20 }); }
+    });
+  });
+
+  /* ---- Header logo: cut the flat white backdrop to transparent. The source
+     crop is tiny (101x50) and JPEG-compressed, so cutting out the
+     background at native resolution and letting CSS scale the result up
+     just magnified both the hard cutout edge and the JPEG's own
+     compression speckling. Instead, upscale first with the browser's own
+     smooth interpolation (drawImage onto a 4x canvas), THEN cut out and
+     feather on that smoothed result — the exported image is already
+     high-res, so the <img> tag is scaling it down, not up. ---- */
+  function cutoutWhiteLogo(img, scale = 4) {
+    return new Promise((resolve) => {
+      const run = () => {
+        const w = img.naturalWidth * scale, h = img.naturalHeight * scale;
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w, h);
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+        const isBg = (i) => data[i] > 235 && data[i + 1] > 235 && data[i + 2] > 235;
+        const seen = new Uint8Array(w * h);
+        const alpha = new Uint8Array(w * h).fill(255);
+        const queue = [];
+        for (let x = 0; x < w; x++) { queue.push(x, (h - 1) * w + x); }
+        for (let y = 0; y < h; y++) { queue.push(y * w, y * w + (w - 1)); }
+        let qi = 0;
+        while (qi < queue.length) {
+          const p = queue[qi++];
+          if (seen[p]) continue;
+          seen[p] = 1;
+          const i = p * 4;
+          if (!isBg(i)) continue;
+          alpha[p] = 0;
+          const x = p % w, y = (p - x) / w;
+          if (x > 0) queue.push(p - 1);
+          if (x < w - 1) queue.push(p + 1);
+          if (y > 0) queue.push(p - w);
+          if (y < h - 1) queue.push(p + w);
+        }
+        /* Letters with an enclosed counter (the "D" and "O" in "MAV STUDIO")
+           have a pocket of background-colored pixels that's surrounded
+           entirely by dark ink, never touching the image border — so the
+           border-seeded flood fill above can never reach it, and it stays
+           opaque white. Fix: scan for any bg-colored pixel not already
+           cleared, flood-fill its own connected component (regardless of
+           border contact), and clear it too if that component is small
+           enough to be a letter counter rather than the real background
+           (which the first pass would already have caught in full). */
+        const holeSeen = new Uint8Array(w * h);
+        for (let start = 0; start < w * h; start++) {
+          if (alpha[start] === 0 || holeSeen[start]) continue;
+          const i0 = start * 4;
+          if (!isBg(i0)) continue;
+          const comp = [start];
+          holeSeen[start] = 1;
+          let qi2 = 0;
+          while (qi2 < comp.length) {
+            const p = comp[qi2++];
+            const x = p % w, y = (p - x) / w;
+            const neighbors = [];
+            if (x > 0) neighbors.push(p - 1);
+            if (x < w - 1) neighbors.push(p + 1);
+            if (y > 0) neighbors.push(p - w);
+            if (y < h - 1) neighbors.push(p + w);
+            for (const np of neighbors) {
+              if (holeSeen[np] || alpha[np] === 0) continue;
+              if (!isBg(np * 4)) continue;
+              holeSeen[np] = 1;
+              comp.push(np);
+            }
+          }
+          if (comp.length < w * h * 0.08) {
+            for (const p of comp) alpha[p] = 0;
+          }
+        }
+        /* JPEG ringing around the letters leaves a band of pixels that are
+           light but just barely fail the >235 flood-fill test, so they stay
+           opaque and survive as visible speckle/noise hugging the edges
+           once feathered. A despeckle pass fixes this: any currently-opaque
+           pixel that's both light-ish (the kind of pixel ringing produces,
+           not the logo's actual dark ink) and mostly surrounded by already-
+           transparent pixels gets pulled into the background too — this
+           only reaches the thin noisy halo, never the solid interior of a
+           letter, since real letter pixels are darker and have opaque
+           neighbors on all sides. */
+        const dr = Math.max(2, Math.round(scale));
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const p = y * w + x;
+            if (alpha[p] === 0) continue;
+            const i = p * 4;
+            const isLightish = data[i] > 180 && data[i + 1] > 180 && data[i + 2] > 180;
+            if (!isLightish) continue;
+            let transparentCount = 0, total = 0;
+            for (let dy = -dr; dy <= dr; dy++) {
+              for (let dx = -dr; dx <= dr; dx++) {
+                const nx = x + dx, ny = y + dy;
+                if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+                total++;
+                if (alpha[ny * w + nx] === 0) transparentCount++;
+              }
+            }
+            if (transparentCount / total > 0.45) alpha[p] = 0;
+          }
+        }
+        const r = Math.max(1, Math.round(scale / 2));
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            let sum = 0, count = 0;
+            for (let dy = -r; dy <= r; dy++) {
+              for (let dx = -r; dx <= r; dx++) {
+                const nx = x + dx, ny = y + dy;
+                if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+                sum += alpha[ny * w + nx]; count++;
+              }
+            }
+            data[(y * w + x) * 4 + 3] = Math.round(sum / count);
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+        canvas.toBlob((blob) => { img.src = URL.createObjectURL(blob); img.onload = resolve; }, 'image/png');
+      };
+      if (img.complete) run(); else img.onload = run;
+    });
+  }
+  cutoutWhiteLogo(document.querySelector('.site-logo img'));
+
+  /* ---- Header logo legibility on the dark .reserve section: toggle a
+     class that inverts the logo's filter once that section is in view. ---- */
+  /* ---- Reserve section: stagger the sub line, CTA, and each address row
+     in on top of the heading's own reveal, instead of everything just being
+     present the moment the section scrolls into view. Without this the
+     section read as static/inert next to the hero video and the product
+     parallax — this gives it the same "things are happening" quality. ---- */
+  ScrollTrigger.create({
+    trigger: '#reserve',
+    start: 'top 70%',
+    once: true,
+    onEnter: () => {
+      gsap.timeline()
+        .to('.reserve-sub', { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, 0.1)
+        .to('.reserve-cta', { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, 0.35)
+        .to('.reserve-meta .row2', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out', stagger: 0.12 }, 0.6);
+    }
+  });
+
+  /* ---- Split the kicker line into one span per character so it can be
+     typed in, rather than faded/risen like the rest of the hero — this is
+     the line carrying "this is a sofa brand", so it gets its own distinct,
+     deliberate entrance instead of blending into the generic reveal style. ---- */
+  function splitChars(el) {
+    const text = el.textContent;
+    el.textContent = '';
+    return [...text].map((ch) => {
+      const span = document.createElement('span');
+      span.textContent = ch === ' ' ? ' ' : ch;
+      span.className = 'kc';
+      el.appendChild(span);
+      return span;
+    });
+  }
+  const kickerChars = splitChars(document.querySelector('.hero .kicker span'));
+
+  /* ---- Cinematic intro: brand word fades in on a dark screen, holds
+     briefly, then fades the whole card out — a single dedicated moment
+     for the brand name instead of it permanently overlapping the hero
+     video. Hero text/scroll-cue entrance is chained after it finishes so
+     nothing animates in underneath while the intro still covers it. ---- */
+  gsap.timeline()
+    .to('.intro .word', { opacity: 1, duration: 0.9, ease: 'power2.out' })
+    .to('.intro .word', { opacity: 1, duration: 0.7 })
+    .to('#intro', {
+      opacity: 0, duration: 0.7, ease: 'power2.inOut',
+      onComplete: () => {
+        document.getElementById('intro').style.display = 'none';
+        document.body.classList.remove('intro-active');
+      }
+    })
+    .to('.hero .kicker .caret', { opacity: 1, duration: 0.01 }, '-=0.3')
+    .to(kickerChars, { opacity: 1, duration: 0.02, stagger: 0.045, ease: 'none' }, '-=0.28')
+    .to('.hero .kicker .caret', { opacity: 0, duration: 0.3 }, '+=0.3')
+    .to('.hero .divider', { width: '64px', duration: 0.6, ease: 'power2.out' }, '-=0.1')
+    .to('.hero .sub span', { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.1, ease: 'power2.out' }, '-=0.2')
+    .to('.hero .scroll-indicator', { opacity: 1, duration: 0.8, ease: 'power2.out' }, '-=0.6');
+
+  /* ---- Generic line-mask reveal for every section heading/statement, scroll-triggered ---- */
+  document.querySelectorAll('section:not(.hero) .eyebrow span, section:not(.hero) h2.heading .row span, .statement-text .row span').forEach((el) => {
+    ScrollTrigger.create({
+      trigger: el,
+      start: 'top 88%',
+      once: true,
+      onEnter: () => gsap.to(el, { y: '0%', duration: 1, ease: 'power3.out' })
+    });
+  });
+
+  /* ---- Backdrop whitening, done in-browser via canvas. The studio backdrop
+     (~rgb(238,237,235)) is light gray, not pure white, so it shows as a faint
+     box against the page's white background. An earlier attempt cut the
+     backdrop out via alpha (flood-fill from the border) but that ate into
+     cream-colored sofas (e.g. MELO BUBBLE) whose highlights are
+     colorimetrically inseparable from the backdrop. This version instead
+     remaps every near-white, low-saturation pixel straight to pure white —
+     a global per-pixel color swap, not a connectivity-based cutout, so even
+     if it touches a bright highlight on the product it only brightens that
+     pixel; it can never carve a hole or erase part of the product. */
+  function whitenBackdrop(img, { lightness = 220, neutrality = 12, soft = false, softFloor = 190, softPower = 2 } = {}) {
+    return new Promise((resolve) => {
+      const run = () => {
+        const w = img.naturalWidth, h = img.naturalHeight;
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i + 1], b = data[i + 2];
+          const max = Math.max(r, g, b), min = Math.min(r, g, b);
+          if (soft) {
+            /* A hard cutoff snaps each pixel fully white or leaves it alone,
+               which on a fabric this close in tone to the backdrop (an
+               ivory/white sofa) flickers pixel-by-pixel across the weave
+               texture — some texture pixels cross the line, their
+               neighbors don't, producing a salt-and-pepper speckle on the
+               product itself. Easing toward white in proportion to how
+               close a pixel already is (instead of snapping) keeps
+               neighboring texture pixels close in value to each other, so
+               no speckle appears. */
+            if (min > 225 && (max - min) < 10) {
+              data[i] = data[i + 1] = data[i + 2] = 255;
+            } else if (min > softFloor && (max - min) < neutrality) {
+              const ratio = Math.pow((min - softFloor) / (255 - softFloor), softPower);
+              data[i] = r + (255 - r) * ratio;
+              data[i + 1] = g + (255 - g) * ratio;
+              data[i + 2] = b + (255 - b) * ratio;
+            }
+          } else if (min > lightness && (max - min) < neutrality) {
+            data[i] = data[i + 1] = data[i + 2] = 255;
+          }
+        }
+        /* Several of the source exports have a solid 1px dark border baked
+           into the file itself (a crop/export artifact, not part of the
+           photo) running down the left and right edges — far too dark to
+           pass the near-white check above, so it stayed as a thin black
+           line right at the product frame's edge. Cloning the next column
+           in over it removes that border without touching any real
+           content, since real content is never confined to a single
+           edge-most pixel column. */
+        for (let y = 0; y < h; y++) {
+          const rowStart = y * w * 4;
+          data[rowStart] = data[rowStart + 4]; data[rowStart + 1] = data[rowStart + 5]; data[rowStart + 2] = data[rowStart + 6];
+          const lastI = rowStart + (w - 1) * 4, prevI = rowStart + (w - 2) * 4;
+          data[lastI] = data[prevI]; data[lastI + 1] = data[prevI + 1]; data[lastI + 2] = data[prevI + 2];
+        }
+        /* A stray specular highlight on the product itself (a small bright
+           glint on dark fabric, e.g.) can pass the same near-white test as
+           the real backdrop, but since it's surrounded by product rather
+           than touching the image border, whitening it turns it into a
+           stark white dot/hole sitting on top of the product. Flood-filling
+           white pixels from the border finds the real backdrop; any other
+           white pixel is such an isolated artifact, and gets inpainted by
+           repeatedly averaging in color from its non-white neighbors until
+           it's fully filled back in. */
+        const isWhite = (p) => { const i = p * 4; return data[i] === 255 && data[i + 1] === 255 && data[i + 2] === 255; };
+        const bgConnected = new Uint8Array(w * h);
+        const wq = [];
+        for (let x = 0; x < w; x++) { wq.push(x, (h - 1) * w + x); }
+        for (let y = 0; y < h; y++) { wq.push(y * w, y * w + (w - 1)); }
+        let wqi = 0;
+        const wseen = new Uint8Array(w * h);
+        while (wqi < wq.length) {
+          const p = wq[wqi++];
+          if (wseen[p]) continue;
+          wseen[p] = 1;
+          if (!isWhite(p)) continue;
+          bgConnected[p] = 1;
+          const x = p % w, y = (p - x) / w;
+          if (x > 0) wq.push(p - 1);
+          if (x < w - 1) wq.push(p + 1);
+          if (y > 0) wq.push(p - w);
+          if (y < h - 1) wq.push(p + w);
+        }
+        let isolated = [];
+        for (let p = 0; p < w * h; p++) {
+          if (isWhite(p) && !bgConnected[p]) isolated.push(p);
+        }
+        let guard = 0;
+        while (isolated.length && guard++ < 64) {
+          const next = [];
+          for (const p of isolated) {
+            const x = p % w, y = (p - x) / w;
+            let sr = 0, sg = 0, sb = 0, count = 0;
+            const neighbors = [];
+            if (x > 0) neighbors.push(p - 1);
+            if (x < w - 1) neighbors.push(p + 1);
+            if (y > 0) neighbors.push(p - w);
+            if (y < h - 1) neighbors.push(p + w);
+            for (const np of neighbors) {
+              if (isWhite(np) && !bgConnected[np]) continue;
+              const ni = np * 4;
+              sr += data[ni]; sg += data[ni + 1]; sb += data[ni + 2]; count++;
+            }
+            if (count === 0) { next.push(p); continue; }
+            const i = p * 4;
+            data[i] = Math.round(sr / count); data[i + 1] = Math.round(sg / count); data[i + 2] = Math.round(sb / count);
+          }
+          isolated = next;
+        }
+        ctx.putImageData(imgData, 0, 0);
+        canvas.toBlob((blob) => {
+          img.src = URL.createObjectURL(blob);
+          img.onload = () => resolve();
+        }, 'image/png');
+      };
+      if (img.complete) run(); else img.onload = run;
+    });
+  }
+
+  /* ---- Color variants: recolor the already-whitened base photo by
+     HSL "colorize" — keep each pixel's relative lightness (so the fabric's
+     folds, shadows, and highlights stay intact as shading) but replace its
+     hue/saturation outright with the target swatch's. An earlier version
+     used a luminance-multiply instead, which is bounded by the original
+     pixel's brightness — on a mid-dark base photo that capped how vivid any
+     recolor could look (light targets like ivory came out muddy/grayish).
+     Driving hue+saturation directly from the target and only borrowing
+     lightness from the photo fixes that, at the cost of being a slightly
+     bigger departure from the literal photographed shading. Background
+     pixels (exact white) are left untouched either way, since recoloring
+     them would paint a visible colored box instead of blending into the
+     page. ---- */
+  /* Flood-fill (from the four borders) every near-white-to-light, low-
+     saturation pixel that's CONNECTED to the edge — this catches the real
+     background plus any soft floor-contact shadow gradient leading into it
+     (both are continuous light/neutral regions touching the border), while
+     leaving the product's own dark fabric/legs alone (they're well below
+     the lightness floor, so the fill can't pass through them) and leaving
+     isolated bright fabric highlights alone too (they're surrounded by
+     dark fabric, not connected to the border through light pixels). This
+     replaces an earlier attempt that skipped a fixed row-range, which
+     either left a colored glow in the shadow (range too small) or left a
+     real chunk of fabric uncolored (range too big) — connectivity instead
+     of position correctly separates "shadow that touches the floor" from
+     "fabric that doesn't", regardless of where either one sits in the frame. */
+  function floodFillShadowMask(data, w, h) {
+    const isShadowish = (i) => {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      return Math.min(r, g, b) > 80 && Math.max(r, g, b) - Math.min(r, g, b) < 25;
+    };
+    const mask = new Uint8Array(w * h);
+    const seen = new Uint8Array(w * h);
+    const queue = [];
+    for (let x = 0; x < w; x++) { queue.push(x, (h - 1) * w + x); }
+    for (let y = 0; y < h; y++) { queue.push(y * w, y * w + (w - 1)); }
+    let qi = 0;
+    while (qi < queue.length) {
+      const p = queue[qi++];
+      if (seen[p]) continue;
+      seen[p] = 1;
+      if (!isShadowish(p * 4)) continue;
+      mask[p] = 1;
+      const x = p % w, y = (p - x) / w;
+      if (x > 0) queue.push(p - 1);
+      if (x < w - 1) queue.push(p + 1);
+      if (y > 0) queue.push(p - w);
+      if (y < h - 1) queue.push(p + w);
+    }
+    return mask;
+  }
+  function colorizeFromWhitened(img, hex) {
+    const r0 = parseInt(hex.slice(1, 3), 16), g0 = parseInt(hex.slice(3, 5), 16), b0 = parseInt(hex.slice(5, 7), 16);
+    return new Promise((resolve) => {
+      const w = img.naturalWidth, h = img.naturalHeight;
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+      const shadowMask = floodFillShadowMask(data, w, h);
+      /* Flat solid fill instead of shading-preserving recolor: every
+         "product" pixel (not background, not the flood-filled shadow)
+         becomes the exact same target RGB. The shaded version kept fold/
+         highlight detail but the per-pixel lightness math kept producing
+         uneven blotches wherever the source shading was uneven (most
+         visibly around the legs) — a flat silhouette has no shading math
+         to go wrong, at the cost of looking more like a color swatch than
+         a studio photo. */
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        if (r === 255 && g === 255 && b === 255) continue;
+        if (shadowMask[i / 4]) continue;
+        data[i] = r0; data[i + 1] = g0; data[i + 2] = b0;
+      }
+      ctx.putImageData(imgData, 0, 0);
+      canvas.toBlob((blob) => resolve(URL.createObjectURL(blob)), 'image/png');
+    });
+  }
+
+  const productImgs = [...document.querySelectorAll('[data-product] img:not(.color-frame)')];
+  Promise.all(productImgs.map((img) => whitenBackdrop(img))).then(async () => {
+    /* ---- Match each .product-frame's box to its own photo's actual aspect
+       ratio. The frame used a fixed 16:11 box with object-fit:contain so
+       every product lined up to the same width, but these new crops don't
+       all share that ratio — whichever ones are taller/narrower than 16:11
+       got letterboxed (empty space above/below the sofa inside the box),
+       which is what pushed the label far below the visible product. ---- */
+    productImgs.forEach((img) => {
+      const frame = img.closest('.product-frame');
+      frame.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
+    });
+
+    /* ---- Wire every color-switcher (MELO BUBBLE, MELO STONE, ...): generate
+       each one's recolored variants once its base photo is whitened, then
+       click-cycle through them. Click-driven (not scroll-tied) so there's no
+       timing/pacing dependency on how fast the user scrolls. ---- */
+    const switchers = [...document.querySelectorAll('.color-switcher')];
+    await Promise.all(switchers.map(async (switcher) => {
+      const baseImg = switcher.querySelector('img:not(.color-frame)');
+      const colorFrames = [...switcher.querySelectorAll('.color-frame')];
+      await Promise.all(colorFrames.map(async (frame) => {
+        /* MELO STONE's variants are real separate photos (.color-frame-real),
+           not algorithmic recolors — just clean their backdrop the same way
+           the base photo was cleaned. Everything else still gets the
+           synthetic solid-fill recolor from its single base photo. */
+        if (frame.classList.contains('color-frame-real')) {
+          if (frame.src.includes('ivory')) {
+            // other near-white real photos (e.g. MELO BOX ivory) get the
+            // soft easing instead — see whitenBackdrop's `soft` option.
+            await whitenBackdrop(frame, { soft: true, softFloor: 160, neutrality: 40, softPower: 1 });
+          } else {
+            await whitenBackdrop(frame);
+          }
+        } else {
+          frame.src = await colorizeFromWhitened(baseImg, frame.dataset.color);
+        }
+      }));
+      const layers = [baseImg, ...colorFrames];
+      let active = 0;
+      switcher.querySelector('.color-next').addEventListener('click', (e) => {
+        e.preventDefault();
+        gsap.to(layers[active], { opacity: 0, duration: 0.35, ease: 'power1.out' });
+        active = (active + 1) % layers.length;
+        gsap.to(layers[active], { opacity: 1, duration: 0.35, ease: 'power1.out' });
+      });
+    }));
+
+    /* ---- Product parallax: each product image zooms in then out as its own
+       section scrolls through the viewport — scale 0.82 -> 1.18, driven purely
+       by scroll position via scrub (no timed tweens, so it can't ever stall). ---- */
+    document.querySelectorAll('[data-product]').forEach((stage) => {
+      /* All stacked layers (base + MELO BUBBLE's color variants, where
+         present) get the same scale tween, so whichever one the color
+         switcher reveals is already at the correct current zoom level
+         instead of snapping back to scale:1. */
+      const imgs = stage.querySelectorAll('img');
+      gsap.fromTo(imgs,
+        { scale: 0.82 },
+        {
+          scale: 1.18,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: stage,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true
+          }
+        }
+      );
+
+      /* Label + index rise into place as the product scrolls into view.
+         Driven by scrub (direct scroll-position -> value mapping via
+         ScrollTrigger's seek, not a timed tween), so there's nothing that
+         needs a ticking clock to "play out".
+
+         Two real bugs found and fixed here, in order:
+         1) yPercent + stagger on a scrubbed tween left the element with TWO
+            stacked translate() calls in its inline transform, so it never
+            visually reached y:0 — switched to plain measured-pixel values.
+         2) The trigger was keyed to the STAGE's top, but the label sits at
+            the stage's bottom (bottom:6vh of a 100vh section) — by the time
+            that trigger window passed, the label was still ~800-1100px
+            below the viewport (confirmed via getBoundingClientRect), so the
+            animation finished before it was ever visible. Fixed by keying
+            each line's own trigger to ITS OWN element instead of the stage,
+            so the reveal window is wherever that line actually scrolls into
+            view — confirmed below this loop. */
+      const lines = [
+        stage.querySelector('.product-label'),
+        stage.querySelector('.product-index')
+      ];
+      lines.forEach((wrap) => {
+        const line = wrap.querySelector('span');
+        const startPx = line.offsetHeight * 1.2;
+        gsap.fromTo(line,
+          { y: startPx },
+          {
+            y: 0,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: wrap,
+              start: 'bottom 95%',
+              end: 'bottom 55%',
+              scrub: true
+            }
+          }
+        );
+      });
+    });
+    ScrollTrigger.refresh();
+  });
+
+  ScrollTrigger.refresh();
+</script>
+
+</body>
+</html>
