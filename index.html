@@ -52,54 +52,51 @@
      row people see the instant the page loads, with no scrolling required.
      A separate fixed element (not inside .site-header) because the header's
      mix-blend-mode:difference would invert these buttons' real colors. */
+  /* Premium floating header bar — a real frosted-glass strip (not just
+     positioned buttons) so the row reads as one cohesive header element,
+     with a clear primary/secondary button hierarchy instead of three
+     equally-loud, differently-colored pills. */
   .quick-bar {
-    position:fixed; top:0; left:0; width:100%; z-index:101;
-    display:flex; justify-content:center; align-items:center; gap:10px;
-    padding:24px 5vw; min-height:76px;
+    position:fixed; top:0; left:0; width:100%; z-index:1000;
+    background:rgba(255,255,255,0.6); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+    padding:16px 5vw;
     pointer-events:none; /* row wrapper only positions things; clicks pass through the gaps */
   }
   .quick-bar > a { pointer-events:auto; }
   .quick-bar > a {
-    display:flex; align-items:center; gap:7px;
-    font-size:12.5px; font-weight:600; letter-spacing:0.2px;
-    padding:11px 18px; border-radius:999px;
-    box-shadow:0 6px 20px rgba(26,23,20,0.16);
-    transition:transform .3s cubic-bezier(.16,1,.3,1);
-    backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    font-size:13px; font-weight:600; letter-spacing:0.1px; white-space:nowrap;
+    padding:10px 18px; border-radius:999px;
+    transition:opacity .3s ease;
   }
-  .quick-bar > a:hover { transform:translateY(-2px); }
-  /* 예약 — highest priority, so it's the only solid-filled, largest pill,
-     plus the same breathing pulse the old header CTA had to keep drawing
-     the eye without needing extra color. */
-  /* Naver green, since this button links out to a Naver Place booking page —
-     matching that brand's own color makes the destination recognizable
-     before the click, the same way the Kakao button uses Kakao yellow. */
-  .quick-bar .qb-reserve {
-    background:#03C75A; color:#fff; font-size:13.5px; padding:12px 22px;
-    animation: bookPulse 2.6s ease-in-out infinite;
+  .quick-bar > a:hover, .quick-bar > a:active { opacity:0.72; }
+  .quick-bar > a svg { width:15px; height:15px; flex-shrink:0; }
+  /* 쇼룸 예약하기 — sole filled pill, deep signature green, carries all the
+     visual weight so the eye lands here first without needing brand-colored
+     (Naver green / Kakao yellow) fills on the other two. */
+  .quick-bar .qb-reserve { background:#1e392a; color:#fff; flex:0 1 auto; }
+  /* 실시간 상담 / 쇼핑몰 바로가기 — ghost pills: transparent fill, a single
+     thin dark-charcoal hairline, monotone icon+text. Demoted on purpose so
+     they read as secondary actions, not competing CTAs. */
+  .quick-bar .qb-kakao, .quick-bar .qb-shop {
+    background:transparent; color:#222; border:1px solid #222;
   }
-  @keyframes bookPulse { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.05); } }
-  /* 상담 — second priority, Kakao's own brand yellow so it's instantly
-     recognizable as "chat" the way it is on the inpock page. */
-  .quick-bar .qb-kakao { background:#FEE500; color:#3C1E1E; }
-  .quick-bar .qb-kakao svg { width:15px; height:15px; flex-shrink:0; }
-  .quick-bar .qb-reserve svg, .quick-bar .qb-shop svg { width:15px; height:15px; flex-shrink:0; }
-  /* 홈페이지 — lowest priority of the three, so it's just an outline on
-     translucent white rather than a solid fill, the same way inpock's own
-     "쇼핑몰 바로가기" item naturally read quieter than the booking/chat ones. */
-  .quick-bar .qb-shop { background:rgba(255,255,255,0.82); color:#1A1714; border:1px solid rgba(26,23,20,0.14); }
-  /* Each pill's own text never wraps internally (white-space:nowrap) — if
-     all three don't fit one row at a given width, the whole third pill
-     drops to a second row instead, since a pill with its label broken
-     mid-word ("쇼룸 예약하 / 기") reads as broken, while a clean second row
-     reads as intentional. flex-wrap + centered row-gap keeps both rows
-     centered as a group. */
-  .quick-bar { flex-wrap:wrap; row-gap:8px; }
-  .quick-bar > a { white-space:nowrap; }
   @media (max-width:700px){
-    .quick-bar { padding:18px 4vw; gap:6px; }
-    .quick-bar > a { padding:10px 12px; font-size:11px; }
-    .quick-bar .qb-reserve { font-size:12px; padding:11px 14px; }
+    .quick-bar { padding:14px 4vw; gap:6px; }
+    .quick-bar > a { padding:9px 13px; font-size:12.5px; }
+  }
+  @media (max-width:390px){
+    .quick-bar > a { padding:8px 12px; font-size:12px; gap:5px; }
+  }
+  @media (max-width:365px){
+    .quick-bar { padding:13px 3vw; gap:4px; }
+    .quick-bar > a { padding:8px 10px; font-size:11.5px; gap:4px; }
+    .quick-bar > a svg { width:13px; height:13px; }
+  }
+  @media (max-width:330px){
+    .quick-bar > a { padding:7px 8px; font-size:10.5px; gap:3px; }
+    .quick-bar > a svg { width:12px; height:12px; }
   }
 
   /* ============ INTRO — cinematic title card before the hero, so the brand
@@ -147,9 +144,9 @@
      elsewhere, so it reads as a deliberate typewritten line instead of just
      another fading caption. */
   .hero .kicker {
-    font-size:clamp(18px,3.2vw,40px); font-weight:600; letter-spacing:3.5px; color:#fff;
-    text-transform:uppercase; margin-bottom:16px; white-space:nowrap;
-    text-shadow:0 2px 18px rgba(0,0,0,0.5);
+    font-size:clamp(22px,4.8vw,30px); font-weight:700; letter-spacing:-0.02em; line-height:1.4; color:#fff;
+    margin-bottom:14px;
+    text-shadow:0 2px 4px rgba(0,0,0,0.2);
   }
   /* The outer <span> wrapping the line stays opacity:1 (it's just a text
      container) — only the per-character spans JS injects inside it (.kc)
@@ -169,8 +166,8 @@
     box-shadow:0 1px 8px rgba(0,0,0,0.35);
   }
   .hero .sub {
-    font-size:clamp(15px,1.5vw,18.5px); letter-spacing:0.3px; color:#fff; font-weight:300; line-height:1.7;
-    text-shadow:0 1px 12px rgba(0,0,0,0.35);
+    font-size:clamp(14px,1.6vw,15.5px); letter-spacing:-0.02em; color:#fff; font-weight:400; line-height:1.4; opacity:0.85;
+    text-shadow:0 2px 4px rgba(0,0,0,0.2); word-break:keep-all;
   }
   .hero .sub span { display:block; transform:translateY(14px); opacity:0; filter:blur(6px); }
   @media (max-width:700px){
@@ -368,7 +365,7 @@
     <span>쇼룸 예약하기</span>
   </a>
   <a href="http://pf.kakao.com/_lpfxixl" target="_blank" rel="noopener" class="qb-kakao">
-    <svg viewBox="0 0 18 18" fill="none"><path d="M9 1.5C4.86 1.5 1.5 4.13 1.5 7.38c0 2.07 1.38 3.9 3.47 4.93L4.1 15.3c-.06.2.17.36.34.23l3.5-2.33c.35.04.7.06 1.06.06 4.14 0 7.5-2.63 7.5-5.88S13.14 1.5 9 1.5z" fill="currentColor"/></svg>
+    <svg viewBox="0 0 18 18" fill="none"><path d="M9 1.5C4.86 1.5 1.5 4.13 1.5 7.38c0 2.07 1.38 3.9 3.47 4.93L4.1 15.3c-.06.2.17.36.34.23l3.5-2.33c.35.04.7.06 1.06.06 4.14 0 7.5-2.63 7.5-5.88S13.14 1.5 9 1.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
     <span>실시간 상담</span>
   </a>
   <a href="https://mav-studio.co.kr/index.html" target="_blank" rel="noopener" class="qb-shop">
@@ -382,9 +379,9 @@
     <source src="videos/hero-comfort.mp4" type="video/mp4">
   </video>
   <div class="hero-info">
-    <div class="kicker"><span>PREMIUM CUSTOM SOFA</span><span class="caret">|</span></div>
+    <div class="kicker"><span>10년을 함께할 맞춤 제작 소파</span><span class="caret">|</span></div>
     <div class="divider"></div>
-    <div class="sub"><span>유럽산 원단 &amp; 부자재로 완성하는 맞춤 소파</span></div>
+    <div class="sub"><span>유럽산 원단 &amp; 부자재로 국내 장인이 완성하는 소파</span></div>
   </div>
 </section>
 
@@ -549,7 +546,12 @@
       return span;
     });
   }
-  const kickerChars = splitChars(document.querySelector('.hero .kicker span'));
+  /* word-grouped split (not the plain per-character splitChars) — the kicker
+     is now a full Korean sentence rather than one short uppercase phrase, so
+     on a narrow phone it needs to be able to wrap; grouping each word's
+     characters in a nowrap span keeps a word like "맞춤" from breaking
+     across lines while still typing in character-by-character. */
+  const kickerChars = splitWordsIntoChars(document.querySelector('.hero .kicker span'), 'kc');
 
   /* ---- Statement paragraph: typed in like the hero kicker, but scroll-
      triggered (the kicker types in on the fixed intro timeline; this one
