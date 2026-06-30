@@ -99,11 +99,18 @@
      translucent white rather than a solid fill, the same way inpock's own
      "쇼핑몰 바로가기" item naturally read quieter than the booking/chat ones. */
   .quick-bar .qb-shop { background:rgba(255,255,255,0.82); color:#1A1714; border:1px solid rgba(26,23,20,0.14); }
+  /* Each pill's own text never wraps internally (white-space:nowrap) — if
+     all three don't fit one row at a given width, the whole third pill
+     drops to a second row instead, since a pill with its label broken
+     mid-word ("쇼룸 예약하 / 기") reads as broken, while a clean second row
+     reads as intentional. flex-wrap + centered row-gap keeps both rows
+     centered as a group. */
+  .quick-bar { flex-wrap:wrap; row-gap:8px; }
+  .quick-bar > a { white-space:nowrap; }
   @media (max-width:700px){
     .quick-bar { padding:18px 4vw; gap:6px; }
-    .quick-bar > a { padding:10px 14px; font-size:11.5px; }
-    .quick-bar .qb-reserve { font-size:12.5px; padding:11px 16px; }
-    .quick-bar span.qb-label-long { display:none; }
+    .quick-bar > a { padding:10px 12px; font-size:11px; }
+    .quick-bar .qb-reserve { font-size:12px; padding:11px 14px; }
   }
   /* Below ~420px the quick-bar pills (centered as a group) push far enough
      left to physically overlap the fixed logo in the corner — shrinking the
@@ -206,7 +213,14 @@
 
   /* ============ STATEMENT — single-line brand identity, no imagery ============ */
   .statement { text-align:center; padding:9vw 5vw 11vw; }
-  .statement-text { font-family:'Cormorant Garamond','Gowun Dodum',sans-serif; font-weight:600; font-size:clamp(18px,2.4vw,27px); line-height:1.7; color:#1A1714; max-width:680px; margin:0 auto; }
+  /* text-align:left (overriding the section's center) — center-aligning
+     worked for the original 2-line punchy tagline since both lines were
+     close in length, but this is now a 6-line paragraph with hand-picked
+     break points of very different lengths; centering those makes the left
+     edge zigzag line to line, which reads as misaligned rather than
+     deliberate. A left-aligned block (still centered as a whole via the
+     container's margin:0 auto) reads as an intentional paragraph instead. */
+  .statement-text { font-family:'Cormorant Garamond','Gowun Dodum',sans-serif; font-weight:600; font-size:clamp(18px,2.4vw,27px); line-height:1.7; color:#1A1714; max-width:680px; margin:0 auto; text-align:left; }
   .statement-text .row { overflow:hidden; }
   .statement-text .row span { display:block; transform:translateY(110%); }
 
@@ -254,7 +268,13 @@
     transition:transform .25s ease, background .25s ease;
   }
   .color-next:hover { transform:translateY(-50%) scale(1.08); background:#fff; }
-  @media (max-width:700px){ .color-next{ right:4px; width:38px; height:38px; font-size:18px; } }
+  /* On mobile the product-frame (and so .color-switcher, which shrinks to
+     the frame's width) is much narrower relative to the viewport than on
+     desktop, so the same small inward offset that reads as "control
+     overlapping the edge of the photo" on desktop instead lands the whole
+     button on top of the sofa itself. There's plenty of empty margin beside
+     the frame on mobile, so push the button out into it instead. */
+  @media (max-width:700px){ .color-next{ right:-30px; width:36px; height:36px; font-size:17px; } }
 
   .product-label {
     font-family:'Cormorant Garamond',serif; font-weight:600; font-size:clamp(24px,4vw,42px);
